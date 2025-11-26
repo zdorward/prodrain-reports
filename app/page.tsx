@@ -7,26 +7,64 @@ import { useRouter } from "next/navigation";
 
 import { toDateInputValue } from "@/utils/date";
 
-// "2025-11-26" style
+import type { BasicReportForm } from "@/lib/types";
 
-type BasicReportForm = {
-  clientName: string;
-  propertyAddress: string;
-  inspectionDate: string;
-  inspectorName: string;
-  rootIntrusion: boolean;
-  cracks: boolean;
-  offsets: boolean;
-  sagging: boolean;
-  blockages: boolean;
-  corrosion: boolean;
-  greaseDebris: boolean;
-};
+import { TextField } from "@/components/TextField";
 
-const baseInputClass =
-  "w-full rounded-md border border-slate-300 px-3 py-2 text-sm " +
-  "text-slate-900 placeholder:text-slate-300 " +
-  "focus:outline-none focus:ring-2 focus:ring-slate-800 focus:border-slate-800";
+function buildFindingsSummary(form: BasicReportForm): string {
+  const parts: string[] = [];
+
+  const hasAnyDefect =
+    form.rootIntrusion ||
+    form.cracks ||
+    form.offsets ||
+    form.sagging ||
+    form.blockages ||
+    form.corrosion ||
+    form.greaseDebris;
+
+  if (!hasAnyDefect) {
+    return "No issues were observed during this inspection.";
+  }
+
+  if (form.rootIntrusion) {
+    parts.push(
+      "Root intrusion was detected in sections of the drain line, indicating roots have penetrated joints or defects in the pipe."
+    );
+  }
+  if (form.cracks) {
+    parts.push(
+      "Cracking was observed along portions of the line, which may allow infiltration and can worsen over time if not addressed."
+    );
+  }
+  if (form.offsets) {
+    parts.push(
+      "Offsets or misaligned joints were identified, which can restrict flow and increase the likelihood of blockages."
+    );
+  }
+  if (form.sagging) {
+    parts.push(
+      "Sagging (belly) was present in part of the line, causing standing water and increasing the risk of recurring backups."
+    );
+  }
+  if (form.blockages) {
+    parts.push(
+      "Obstructions or blockages were noted, indicating impaired flow that may require clearing or further investigation."
+    );
+  }
+  if (form.corrosion) {
+    parts.push(
+      "Corrosion or scaling was visible, suggesting deterioration that could lead to reduced pipe diameter or structural weakness."
+    );
+  }
+  if (form.greaseDebris) {
+    parts.push(
+      "Grease or debris accumulation was found, which can restrict flow and contribute to future blockages if not cleaned."
+    );
+  }
+
+  return parts.join("\n\n");
+}
 
 export default function HomePage() {
   const router = useRouter();
@@ -55,6 +93,7 @@ export default function HomePage() {
     blockages: false,
     corrosion: false,
     greaseDebris: false,
+    notes: "",
   });
 
   function handleCheckboxChange(e: ChangeEvent<HTMLInputElement>) {
@@ -75,18 +114,39 @@ export default function HomePage() {
     }));
   }
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    // 1. Generate a unique ID for this report
     const id = crypto.randomUUID();
 
-    // 2. Save the report data into localStorage in the browser
-    if (typeof window !== "undefined") {
-      localStorage.setItem(`report-${id}`, JSON.stringify(form));
+    const res = await fetch("/api/reports", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id,
+        clientName: form.clientName,
+        propertyAddress: form.propertyAddress,
+        inspectionDate: form.inspectionDate,
+        inspectorName: form.inspectorName,
+        rootIntrusion: form.rootIntrusion,
+        cracks: form.cracks,
+        offsets: form.offsets,
+        sagging: form.sagging,
+        blockages: form.blockages,
+        corrosion: form.corrosion,
+        greaseDebris: form.greaseDebris,
+        notes: buildFindingsSummary(form),
+      }),
+    });
+
+    if (!res.ok) {
+      console.error("Failed to save report");
+      // TODO: surface this in the UI if you want
+      return;
     }
 
-    // 3. Redirect to the report preview page
     router.push(`/reports/${id}`);
   }
 
@@ -102,81 +162,38 @@ export default function HomePage() {
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label
-              htmlFor="clientName"
-              className="block text-sm font-medium text-slate-700 mb-1"
-            >
-              Client Name
-            </label>
-            <input
-              id="clientName"
-              name="clientName"
-              type="text"
-              value={form.clientName}
-              onChange={handleChange}
-              className={baseInputClass}
-              placeholder="John Smith"
-              required
-            />
-          </div>
+          <TextField
+            name="clientName"
+            label="Client Name"
+            value={form.clientName}
+            onChange={handleChange}
+            placeholder="John Smith"
+          />
 
-          <div>
-            <label
-              htmlFor="propertyAddress"
-              className="block text-sm font-medium text-slate-700 mb-1"
-            >
-              Property Address
-            </label>
-            <input
-              id="propertyAddress"
-              name="propertyAddress"
-              type="text"
-              value={form.propertyAddress}
-              onChange={handleChange}
-              className={baseInputClass}
-              placeholder="123 Main St, Anytown"
-              required
-            />
-          </div>
+          <TextField
+            name="propertyAddress"
+            label="Property Address"
+            value={form.propertyAddress}
+            onChange={handleChange}
+            placeholder="123 Main St, Anytown"
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="inspectionDate"
-                className="block text-sm font-medium text-slate-700 mb-1"
-              >
-                Inspection Date
-              </label>
-              <input
-                id="inspectionDate"
-                name="inspectionDate"
-                type="date"
-                value={form.inspectionDate}
-                onChange={handleChange}
-                className={baseInputClass}
-                required
-              />
-            </div>
+            <TextField
+              name="inspectionDate"
+              label="Inspection Date"
+              value={form.inspectionDate}
+              onChange={handleChange}
+              type="date"
+            />
 
-            <div>
-              <label
-                htmlFor="inspectorName"
-                className="block text-sm font-medium text-slate-700 mb-1"
-              >
-                Inspector Name
-              </label>
-              <input
-                id="inspectorName"
-                name="inspectorName"
-                type="text"
-                value={form.inspectorName}
-                onChange={handleChange}
-                className={baseInputClass}
-                placeholder="Danny"
-                required
-              />
-            </div>
+            <TextField
+              name="inspectorName"
+              label="Inspector Name"
+              value={form.inspectorName}
+              onChange={handleChange}
+              placeholder="Danny"
+            />
           </div>
 
           <fieldset className="border border-slate-200 rounded-md p-4">
