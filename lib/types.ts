@@ -1,22 +1,19 @@
+export const defectKeys = [
+  "rootIntrusion",
+  "cracks",
+  "offsets",
+  "sagging",
+  "blockages",
+  "corrosion",
+  "greaseDebris",
+] as const;
+
 export type BasicReportForm = {
   clientName: string;
   propertyAddress: string;
   inspectionDate: string;
   inspectorName: string;
   notes: string;
+} & Record<DefectKey, boolean>;
 
-  //defects
-  rootIntrusion: boolean;
-  cracks: boolean;
-  offsets: boolean;
-  sagging: boolean;
-  blockages: boolean;
-  corrosion: boolean;
-  greaseDebris: boolean;
-};
-
-export type ReportRecord = BasicReportForm & {
-  id: string;
-  notes: string;
-  created_at: string;
-};
+export type DefectKey = (typeof defectKeys)[number];

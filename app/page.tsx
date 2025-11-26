@@ -7,84 +7,39 @@ import { useRouter } from "next/navigation";
 
 import { toDateInputValue } from "@/utils/date";
 
-import type { BasicReportForm } from "@/lib/types";
-
+import type { BasicReportForm, DefectKey } from "@/lib/types";
+import { defectNotes } from "@/lib/defectNotes";
 import { TextField } from "@/components/TextField";
 
+const defectsConfig: { key: DefectKey; label: string }[] = [
+  { key: "rootIntrusion", label: "Root intrusion" },
+  { key: "cracks", label: "Cracks" },
+  { key: "offsets", label: "Offsets / misalignment" },
+  { key: "sagging", label: "Sagging / belly" },
+  { key: "blockages", label: "Blockages / obstructions" },
+  { key: "corrosion", label: "Corrosion / scaling" },
+  { key: "greaseDebris", label: "Grease / debris accumulation" },
+];
+
 function buildFindingsSummary(form: BasicReportForm): string {
-  const parts: string[] = [];
+  const activeNotes = defectsConfig
+    .filter(({ key }) => form[key])
+    .map(({ key }) => defectNotes[key]);
 
-  const hasAnyDefect =
-    form.rootIntrusion ||
-    form.cracks ||
-    form.offsets ||
-    form.sagging ||
-    form.blockages ||
-    form.corrosion ||
-    form.greaseDebris;
-
-  if (!hasAnyDefect) {
+  if (activeNotes.length === 0) {
     return "No issues were observed during this inspection.";
   }
 
-  if (form.rootIntrusion) {
-    parts.push(
-      "Root intrusion was detected in sections of the drain line, indicating roots have penetrated joints or defects in the pipe."
-    );
-  }
-  if (form.cracks) {
-    parts.push(
-      "Cracking was observed along portions of the line, which may allow infiltration and can worsen over time if not addressed."
-    );
-  }
-  if (form.offsets) {
-    parts.push(
-      "Offsets or misaligned joints were identified, which can restrict flow and increase the likelihood of blockages."
-    );
-  }
-  if (form.sagging) {
-    parts.push(
-      "Sagging (belly) was present in part of the line, causing standing water and increasing the risk of recurring backups."
-    );
-  }
-  if (form.blockages) {
-    parts.push(
-      "Obstructions or blockages were noted, indicating impaired flow that may require clearing or further investigation."
-    );
-  }
-  if (form.corrosion) {
-    parts.push(
-      "Corrosion or scaling was visible, suggesting deterioration that could lead to reduced pipe diameter or structural weakness."
-    );
-  }
-  if (form.greaseDebris) {
-    parts.push(
-      "Grease or debris accumulation was found, which can restrict flow and contribute to future blockages if not cleaned."
-    );
-  }
-
-  return parts.join("\n\n");
+  return activeNotes.join("\n\n");
 }
 
 export default function HomePage() {
   const router = useRouter();
 
-  const todayStr = toDateInputValue();
-
-  const defectsConfig = [
-    { key: "rootIntrusion", label: "Root intrusion" },
-    { key: "cracks", label: "Cracks" },
-    { key: "offsets", label: "Offsets / misalignment" },
-    { key: "sagging", label: "Sagging / belly" },
-    { key: "blockages", label: "Blockages / obstructions" },
-    { key: "corrosion", label: "Corrosion / scaling" },
-    { key: "greaseDebris", label: "Grease / debris accumulation" },
-  ] as const;
-
   const [form, setForm] = useState<BasicReportForm>({
     clientName: "",
     propertyAddress: "",
-    inspectionDate: todayStr,
+    inspectionDate: toDateInputValue(),
     inspectorName: "",
     rootIntrusion: false,
     cracks: false,
@@ -96,21 +51,18 @@ export default function HomePage() {
     notes: "",
   });
 
-  function handleCheckboxChange(e: ChangeEvent<HTMLInputElement>) {
-    const { name, checked } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: checked,
-    }));
-  }
-
-  function handleChange(
+  function handleInputChange(
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) {
-    const { name, value } = e.target;
+    const target = e.target;
+    const key = target.name as keyof BasicReportForm;
+
     setForm((prev) => ({
       ...prev,
-      [name]: value,
+      [key]:
+        target instanceof HTMLInputElement && target.type === "checkbox"
+          ? target.checked
+          : target.value,
     }));
   }
 
@@ -166,7 +118,7 @@ export default function HomePage() {
             name="clientName"
             label="Client Name"
             value={form.clientName}
-            onChange={handleChange}
+            onChange={handleInputChange}
             placeholder="John Smith"
           />
 
@@ -174,7 +126,7 @@ export default function HomePage() {
             name="propertyAddress"
             label="Property Address"
             value={form.propertyAddress}
-            onChange={handleChange}
+            onChange={handleInputChange}
             placeholder="123 Main St, Anytown"
           />
 
@@ -183,7 +135,7 @@ export default function HomePage() {
               name="inspectionDate"
               label="Inspection Date"
               value={form.inspectionDate}
-              onChange={handleChange}
+              onChange={handleInputChange}
               type="date"
             />
 
@@ -191,7 +143,7 @@ export default function HomePage() {
               name="inspectorName"
               label="Inspector Name"
               value={form.inspectorName}
-              onChange={handleChange}
+              onChange={handleInputChange}
               placeholder="Danny"
             />
           </div>
@@ -213,7 +165,7 @@ export default function HomePage() {
                     type="checkbox"
                     name={key}
                     checked={form[key]}
-                    onChange={handleCheckboxChange}
+                    onChange={handleInputChange}
                     className="h-4 w-4 rounded border-slate-300"
                   />
                   <span>{label}</span>
