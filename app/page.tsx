@@ -5,6 +5,10 @@ import { useState } from "react";
 import type { FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 
+import { toDateInputValue } from "@/utils/date";
+
+// "2025-11-26" style
+
 type BasicReportForm = {
   clientName: string;
   propertyAddress: string;
@@ -27,11 +31,17 @@ const baseInputClass =
 export default function HomePage() {
   const router = useRouter();
 
-  const today = new Date();
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, "0");
-  const dd = String(today.getDate()).padStart(2, "0");
-  const todayStr = `${yyyy}-${mm}-${dd}`;
+  const todayStr = toDateInputValue();
+
+  const defectsConfig = [
+    { key: "rootIntrusion", label: "Root intrusion" },
+    { key: "cracks", label: "Cracks" },
+    { key: "offsets", label: "Offsets / misalignment" },
+    { key: "sagging", label: "Sagging / belly" },
+    { key: "blockages", label: "Blockages / obstructions" },
+    { key: "corrosion", label: "Corrosion / scaling" },
+    { key: "greaseDebris", label: "Grease / debris accumulation" },
+  ] as const;
 
   const [form, setForm] = useState<BasicReportForm>({
     clientName: "",
@@ -177,82 +187,21 @@ export default function HomePage() {
               Check all defects observed during the drain inspection.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-              <label className="inline-flex items-center gap-2 text-slate-700">
-                <input
-                  type="checkbox"
-                  name="rootIntrusion"
-                  checked={form.rootIntrusion}
-                  onChange={handleCheckboxChange}
-                  className="h-4 w-4 rounded border-slate-300"
-                />
-                <span>Root intrusion</span>
-              </label>
-
-              <label className="inline-flex items-center gap-2 text-slate-700">
-                <input
-                  type="checkbox"
-                  name="cracks"
-                  checked={form.cracks}
-                  onChange={handleCheckboxChange}
-                  className="h-4 w-4 rounded border-slate-300"
-                />
-                <span>Cracks</span>
-              </label>
-
-              <label className="inline-flex items-center gap-2 text-slate-700">
-                <input
-                  type="checkbox"
-                  name="offsets"
-                  checked={form.offsets}
-                  onChange={handleCheckboxChange}
-                  className="h-4 w-4 rounded border-slate-300"
-                />
-                <span>Offsets / misalignment</span>
-              </label>
-
-              <label className="inline-flex items-center gap-2 text-slate-700">
-                <input
-                  type="checkbox"
-                  name="sagging"
-                  checked={form.sagging}
-                  onChange={handleCheckboxChange}
-                  className="h-4 w-4 rounded border-slate-300"
-                />
-                <span>Sagging / belly</span>
-              </label>
-
-              <label className="inline-flex items-center gap-2 text-slate-700">
-                <input
-                  type="checkbox"
-                  name="blockages"
-                  checked={form.blockages}
-                  onChange={handleCheckboxChange}
-                  className="h-4 w-4 rounded border-slate-300"
-                />
-                <span>Blockages / obstructions</span>
-              </label>
-
-              <label className="inline-flex items-center gap-2 text-slate-700">
-                <input
-                  type="checkbox"
-                  name="corrosion"
-                  checked={form.corrosion}
-                  onChange={handleCheckboxChange}
-                  className="h-4 w-4 rounded border-slate-300"
-                />
-                <span>Corrosion / scaling</span>
-              </label>
-
-              <label className="inline-flex items-center gap-2 text-slate-700">
-                <input
-                  type="checkbox"
-                  name="greaseDebris"
-                  checked={form.greaseDebris}
-                  onChange={handleCheckboxChange}
-                  className="h-4 w-4 rounded border-slate-300"
-                />
-                <span>Grease / debris accumulation</span>
-              </label>
+              {defectsConfig.map(({ key, label }) => (
+                <label
+                  key={key}
+                  className="inline-flex items-center gap-2 text-slate-700"
+                >
+                  <input
+                    type="checkbox"
+                    name={key}
+                    checked={form[key]}
+                    onChange={handleCheckboxChange}
+                    className="h-4 w-4 rounded border-slate-300"
+                  />
+                  <span>{label}</span>
+                </label>
+              ))}
             </div>
           </fieldset>
 
