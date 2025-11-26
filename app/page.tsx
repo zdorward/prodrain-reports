@@ -10,7 +10,6 @@ type BasicReportForm = {
   propertyAddress: string;
   inspectionDate: string;
   inspectorName: string;
-  // notes: string;
   rootIntrusion: boolean;
   cracks: boolean;
   offsets: boolean;
@@ -39,7 +38,6 @@ export default function HomePage() {
     propertyAddress: "",
     inspectionDate: todayStr,
     inspectorName: "",
-    // notes: "",
     rootIntrusion: false,
     cracks: false,
     offsets: false,
@@ -257,24 +255,6 @@ export default function HomePage() {
               </label>
             </div>
           </fieldset>
-
-          {/* <div>
-            <label
-              htmlFor="notes"
-              className="block text-sm font-medium text-slate-700 mb-1"
-            >
-              General Notes (temporary)
-            </label>
-            <textarea
-              id="notes"
-              name="notes"
-              value={form.notes}
-              onChange={handleChange}
-              rows={4}
-              className={baseInputClass}
-              placeholder="High-level summary of the drain inspection. Later, this will be generated automatically."
-            />
-          </div> */}
 
           <button
             type="submit"
