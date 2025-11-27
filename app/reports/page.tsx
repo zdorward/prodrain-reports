@@ -32,8 +32,8 @@ export default function ReportsListPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-3xl bg-white shadow-md rounded-lg p-6 space-y-4">
+    <div className=" w-full max-w-3xl min-h-screen bg-slate-100 p-4">
+      <div className="mx-auto bg-white shadow-md rounded-lg p-6 space-y-4">
         <h1 className="text-2xl font-semibold text-slate-800">
           Generated Reports
         </h1>

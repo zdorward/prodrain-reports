@@ -103,7 +103,7 @@ export default function HomePage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
+    <main className="bg-slate-100 flex items-center justify-center p-4 overflow-hidden">
       <div className="w-full max-w-3xl bg-white shadow-md rounded-lg p-6">
         <h1 className="text-2xl font-semibold mb-2 text-slate-800">
           New Drain Inspection Report
