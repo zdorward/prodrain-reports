@@ -5,41 +5,42 @@ import { useState } from "react";
 import type { FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 
-type BasicReportForm = {
-  clientName: string;
-  propertyAddress: string;
-  inspectionDate: string;
-  inspectorName: string;
-  // notes: string;
-  rootIntrusion: boolean;
-  cracks: boolean;
-  offsets: boolean;
-  sagging: boolean;
-  blockages: boolean;
-  corrosion: boolean;
-  greaseDebris: boolean;
-};
+import { toDateInputValue } from "@/utils/date";
 
-const baseInputClass =
-  "w-full rounded-md border border-slate-300 px-3 py-2 text-sm " +
-  "text-slate-900 placeholder:text-slate-300 " +
-  "focus:outline-none focus:ring-2 focus:ring-slate-800 focus:border-slate-800";
+import type { BasicReportForm, DefectKey } from "@/lib/types";
+import { defectNotes } from "@/lib/defectNotes";
+import { TextField } from "@/components/TextField";
+
+const defectsConfig: { key: DefectKey; label: string }[] = [
+  { key: "rootIntrusion", label: "Root intrusion" },
+  { key: "cracks", label: "Cracks" },
+  { key: "offsets", label: "Offsets / misalignment" },
+  { key: "sagging", label: "Sagging / belly" },
+  { key: "blockages", label: "Blockages / obstructions" },
+  { key: "corrosion", label: "Corrosion / scaling" },
+  { key: "greaseDebris", label: "Grease / debris accumulation" },
+];
+
+function buildFindingsSummary(form: BasicReportForm): string {
+  const activeNotes = defectsConfig
+    .filter(({ key }) => form[key])
+    .map(({ key }) => defectNotes[key]);
+
+  if (activeNotes.length === 0) {
+    return "No issues were observed during this inspection.";
+  }
+
+  return activeNotes.join("\n\n");
+}
 
 export default function HomePage() {
   const router = useRouter();
 
-  const today = new Date();
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, "0");
-  const dd = String(today.getDate()).padStart(2, "0");
-  const todayStr = `${yyyy}-${mm}-${dd}`;
-
   const [form, setForm] = useState<BasicReportForm>({
     clientName: "",
     propertyAddress: "",
-    inspectionDate: todayStr,
+    inspectionDate: toDateInputValue(),
     inspectorName: "",
-    // notes: "",
     rootIntrusion: false,
     cracks: false,
     offsets: false,
@@ -47,43 +48,62 @@ export default function HomePage() {
     blockages: false,
     corrosion: false,
     greaseDebris: false,
+    notes: "",
   });
 
-  function handleCheckboxChange(e: ChangeEvent<HTMLInputElement>) {
-    const { name, checked } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: checked,
-    }));
-  }
-
-  function handleChange(
+  function handleInputChange(
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) {
-    const { name, value } = e.target;
+    const target = e.target;
+    const key = target.name as keyof BasicReportForm;
+
     setForm((prev) => ({
       ...prev,
-      [name]: value,
+      [key]:
+        target instanceof HTMLInputElement && target.type === "checkbox"
+          ? target.checked
+          : target.value,
     }));
   }
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    // 1. Generate a unique ID for this report
     const id = crypto.randomUUID();
 
-    // 2. Save the report data into localStorage in the browser
-    if (typeof window !== "undefined") {
-      localStorage.setItem(`report-${id}`, JSON.stringify(form));
+    const res = await fetch("/api/reports", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id,
+        clientName: form.clientName,
+        propertyAddress: form.propertyAddress,
+        inspectionDate: form.inspectionDate,
+        inspectorName: form.inspectorName,
+        rootIntrusion: form.rootIntrusion,
+        cracks: form.cracks,
+        offsets: form.offsets,
+        sagging: form.sagging,
+        blockages: form.blockages,
+        corrosion: form.corrosion,
+        greaseDebris: form.greaseDebris,
+        notes: buildFindingsSummary(form),
+      }),
+    });
+
+    if (!res.ok) {
+      console.error("Failed to save report");
+      // TODO: surface this in the UI if you want
+      return;
     }
 
-    // 3. Redirect to the report preview page
     router.push(`/reports/${id}`);
   }
 
   return (
-    <main className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
+    <main className="bg-slate-100 flex items-center justify-center p-4 overflow-hidden">
       <div className="w-full max-w-3xl bg-white shadow-md rounded-lg p-6">
         <h1 className="text-2xl font-semibold mb-2 text-slate-800">
           New Drain Inspection Report
@@ -94,81 +114,38 @@ export default function HomePage() {
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label
-              htmlFor="clientName"
-              className="block text-sm font-medium text-slate-700 mb-1"
-            >
-              Client Name
-            </label>
-            <input
-              id="clientName"
-              name="clientName"
-              type="text"
-              value={form.clientName}
-              onChange={handleChange}
-              className={baseInputClass}
-              placeholder="John Smith"
-              required
-            />
-          </div>
+          <TextField
+            name="clientName"
+            label="Client Name"
+            value={form.clientName}
+            onChange={handleInputChange}
+            placeholder="John Smith"
+          />
 
-          <div>
-            <label
-              htmlFor="propertyAddress"
-              className="block text-sm font-medium text-slate-700 mb-1"
-            >
-              Property Address
-            </label>
-            <input
-              id="propertyAddress"
-              name="propertyAddress"
-              type="text"
-              value={form.propertyAddress}
-              onChange={handleChange}
-              className={baseInputClass}
-              placeholder="123 Main St, Anytown"
-              required
-            />
-          </div>
+          <TextField
+            name="propertyAddress"
+            label="Property Address"
+            value={form.propertyAddress}
+            onChange={handleInputChange}
+            placeholder="123 Main St, Anytown"
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="inspectionDate"
-                className="block text-sm font-medium text-slate-700 mb-1"
-              >
-                Inspection Date
-              </label>
-              <input
-                id="inspectionDate"
-                name="inspectionDate"
-                type="date"
-                value={form.inspectionDate}
-                onChange={handleChange}
-                className={baseInputClass}
-                required
-              />
-            </div>
+            <TextField
+              name="inspectionDate"
+              label="Inspection Date"
+              value={form.inspectionDate}
+              onChange={handleInputChange}
+              type="date"
+            />
 
-            <div>
-              <label
-                htmlFor="inspectorName"
-                className="block text-sm font-medium text-slate-700 mb-1"
-              >
-                Inspector Name
-              </label>
-              <input
-                id="inspectorName"
-                name="inspectorName"
-                type="text"
-                value={form.inspectorName}
-                onChange={handleChange}
-                className={baseInputClass}
-                placeholder="Danny"
-                required
-              />
-            </div>
+            <TextField
+              name="inspectorName"
+              label="Inspector Name"
+              value={form.inspectorName}
+              onChange={handleInputChange}
+              placeholder="Danny"
+            />
           </div>
 
           <fieldset className="border border-slate-200 rounded-md p-4">
@@ -179,102 +156,23 @@ export default function HomePage() {
               Check all defects observed during the drain inspection.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-              <label className="inline-flex items-center gap-2 text-slate-700">
-                <input
-                  type="checkbox"
-                  name="rootIntrusion"
-                  checked={form.rootIntrusion}
-                  onChange={handleCheckboxChange}
-                  className="h-4 w-4 rounded border-slate-300"
-                />
-                <span>Root intrusion</span>
-              </label>
-
-              <label className="inline-flex items-center gap-2 text-slate-700">
-                <input
-                  type="checkbox"
-                  name="cracks"
-                  checked={form.cracks}
-                  onChange={handleCheckboxChange}
-                  className="h-4 w-4 rounded border-slate-300"
-                />
-                <span>Cracks</span>
-              </label>
-
-              <label className="inline-flex items-center gap-2 text-slate-700">
-                <input
-                  type="checkbox"
-                  name="offsets"
-                  checked={form.offsets}
-                  onChange={handleCheckboxChange}
-                  className="h-4 w-4 rounded border-slate-300"
-                />
-                <span>Offsets / misalignment</span>
-              </label>
-
-              <label className="inline-flex items-center gap-2 text-slate-700">
-                <input
-                  type="checkbox"
-                  name="sagging"
-                  checked={form.sagging}
-                  onChange={handleCheckboxChange}
-                  className="h-4 w-4 rounded border-slate-300"
-                />
-                <span>Sagging / belly</span>
-              </label>
-
-              <label className="inline-flex items-center gap-2 text-slate-700">
-                <input
-                  type="checkbox"
-                  name="blockages"
-                  checked={form.blockages}
-                  onChange={handleCheckboxChange}
-                  className="h-4 w-4 rounded border-slate-300"
-                />
-                <span>Blockages / obstructions</span>
-              </label>
-
-              <label className="inline-flex items-center gap-2 text-slate-700">
-                <input
-                  type="checkbox"
-                  name="corrosion"
-                  checked={form.corrosion}
-                  onChange={handleCheckboxChange}
-                  className="h-4 w-4 rounded border-slate-300"
-                />
-                <span>Corrosion / scaling</span>
-              </label>
-
-              <label className="inline-flex items-center gap-2 text-slate-700">
-                <input
-                  type="checkbox"
-                  name="greaseDebris"
-                  checked={form.greaseDebris}
-                  onChange={handleCheckboxChange}
-                  className="h-4 w-4 rounded border-slate-300"
-                />
-                <span>Grease / debris accumulation</span>
-              </label>
+              {defectsConfig.map(({ key, label }) => (
+                <label
+                  key={key}
+                  className="inline-flex items-center gap-2 text-slate-700"
+                >
+                  <input
+                    type="checkbox"
+                    name={key}
+                    checked={form[key]}
+                    onChange={handleInputChange}
+                    className="h-4 w-4 rounded border-slate-300"
+                  />
+                  <span>{label}</span>
+                </label>
+              ))}
             </div>
           </fieldset>
-
-          {/* <div>
-            <label
-              htmlFor="notes"
-              className="block text-sm font-medium text-slate-700 mb-1"
-            >
-              General Notes (temporary)
-            </label>
-            <textarea
-              id="notes"
-              name="notes"
-              value={form.notes}
-              onChange={handleChange}
-              rows={4}
-              className={baseInputClass}
-              placeholder="High-level summary of the drain inspection. Later, this will be generated automatically."
-            />
-          </div> */}
 
           <button
             type="submit"
