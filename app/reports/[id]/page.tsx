@@ -81,7 +81,7 @@ export default function ReportPage() {
               Drain Inspection Report
             </h1>
             <p className="text-sm text-slate-600 mt-1">
-              Pro Drain Techs – Formal Inspection Document
+              Pro Drain Techs - Formal Inspection Document
             </p>
           </header>
 
@@ -163,10 +163,10 @@ export default function ReportPage() {
           </section>
         </div>
 
-        <footer className="border-t border-slate-300 pt-4 text-center text-xs text-slate-500 print:break-inside-avoid">
+        {/* <footer className="print-footer border-t border-slate-300 pt-4 text-center text-xs text-slate-500 print:break-inside-avoid">
           <p>Pro Drain Techs – Confidential Inspection Report</p>
           <p>Generated on {report.inspectionDate}</p>
-        </footer>
+        </footer> */}
       </div>
 
       <div className="flex justify-center print:hidden">
