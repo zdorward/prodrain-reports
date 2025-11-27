@@ -14,7 +14,9 @@ export function NavBar() {
     <nav className="w-full bg-white shadow-sm border-b border-slate-200">
       <div className="max-w-3xl mx-auto flex items-center gap-6 px-6 h-14">
         {/* optional brand */}
-        <span className="text-base font-semibold text-slate-800">ProDrain</span>
+        <span className="text-base font-semibold text-slate-800">
+          DrainReport
+        </span>
 
         <div className="flex gap-2">
           <Link href="/" className={path === "/" ? active : inactive}>

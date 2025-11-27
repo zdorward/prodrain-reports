@@ -3,7 +3,7 @@ import { NavBar } from "@/components/NavBar";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ProDrainTech Reports",
+  title: "DrainReport",
   description: "Developed by Zack Dorward",
 };
 
