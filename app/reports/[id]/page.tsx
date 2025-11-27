@@ -7,13 +7,13 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-import type { BasicReportForm } from "@/lib/types"; // adjust path if needed
+import type { ReportDraft } from "@/lib/types"; // adjust path if needed
 
 export default function ReportPage() {
   const params = useParams<{ id: string }>();
   const id = params?.id;
 
-  const [report, setReport] = useState<BasicReportForm | null | undefined>(
+  const [report, setReport] = useState<ReportDraft | null | undefined>(
     undefined
   );
 
@@ -42,7 +42,7 @@ export default function ReportPage() {
         return;
       }
 
-      setReport(data as BasicReportForm);
+      setReport(data as ReportDraft);
     };
 
     fetchReport();
@@ -158,6 +158,13 @@ export default function ReportPage() {
             )}
           </div>
         </section>
+
+        <button
+          type="button"
+          className="cursor-pointer inline-flex items-center justify-center rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-800 focus:ring-offset-2"
+        >
+          Print Report
+        </button>
 
         <footer className="mt-10 border-t border-slate-300 pt-4 text-center text-xs text-slate-500">
           <p>Pro Drain Techs — Confidential Inspection Report</p>
