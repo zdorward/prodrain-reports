@@ -1,6 +1,6 @@
 // app/layout.tsx
 import type { Metadata } from "next";
-import "./globals.css";
+import "../globals.css";
 
 export const metadata: Metadata = {
   title: "DrainReport",
@@ -13,10 +13,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className="min-h-screen flex flex-col overflow-y-scroll">
-        {children}
-      </body>
-    </html>
+    <main className="min-h-screen flex flex-col overflow-y-scroll">
+      {children}
+    </main>
   );
 }
