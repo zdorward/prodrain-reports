@@ -1,9 +1,20 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase/client"; // ⬅️ updated import
+import { createClient } from "@/lib/supabase/server";
 
 import type { BasicReportForm } from "@/lib/types";
 
 export async function POST(request: Request) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const body = await request.json();
 
   const report = body as BasicReportForm & { id: string };
@@ -11,6 +22,7 @@ export async function POST(request: Request) {
   const { data, error } = await supabase.from("reports").upsert(
     {
       id: report.id,
+      user_id: user.id,
       clientName: report.clientName,
       propertyAddress: report.propertyAddress,
       inspectionDate: report.inspectionDate,
