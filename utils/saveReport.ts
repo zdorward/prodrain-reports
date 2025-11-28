@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabase/client";
 import type { BasicReportForm } from "@/lib/types";
 
 export async function saveReportToSupabase(id: string, form: BasicReportForm) {
