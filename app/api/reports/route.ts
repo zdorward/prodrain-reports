@@ -46,3 +46,40 @@ export async function POST(request: Request) {
 
   return NextResponse.json({ data }, { status: 200 });
 }
+
+export async function GET(request: Request) {
+  const supabase = await createClient();
+
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get("id");
+
+  if (!id) {
+    return NextResponse.json({ error: "Missing id" }, { status: 400 });
+  }
+
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { data, error } = await supabase
+    .from("reports")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    console.error(error);
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+
+  if (!data) {
+    return NextResponse.json({ data: null }, { status: 404 });
+  }
+
+  return NextResponse.json({ data }, { status: 200 });
+}
