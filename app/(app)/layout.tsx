@@ -20,7 +20,10 @@ export default async function AppLayout({
 
   return (
     <>
-      <NavBar email={session.user?.email ?? null} />
+      <div className="print:hidden">
+        <NavBar email={session.user?.email ?? null} />
+      </div>
+
       <main className="flex-1 bg-slate-100 flex items-center justify-center p-4 overflow-hidden">
         {children}
       </main>

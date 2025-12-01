@@ -4,6 +4,7 @@
 import { useState } from "react";
 import type { FormEvent, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 import { toDateInputValue } from "@/utils/date";
 
@@ -35,6 +36,7 @@ function buildFindingsSummary(form: BasicReportForm): string {
 
 export default function HomePage() {
   const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [form, setForm] = useState<BasicReportForm>({
     clientName: "",
@@ -69,37 +71,43 @@ export default function HomePage() {
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    const id = crypto.randomUUID();
+    setIsSubmitting(true);
 
-    const res = await fetch("/api/reports", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        id,
-        clientName: form.clientName,
-        propertyAddress: form.propertyAddress,
-        inspectionDate: form.inspectionDate,
-        inspectorName: form.inspectorName,
-        rootIntrusion: form.rootIntrusion,
-        cracks: form.cracks,
-        offsets: form.offsets,
-        sagging: form.sagging,
-        blockages: form.blockages,
-        corrosion: form.corrosion,
-        greaseDebris: form.greaseDebris,
-        notes: buildFindingsSummary(form),
-      }),
-    });
+    try {
+      const id = crypto.randomUUID();
 
-    if (!res.ok) {
-      console.error("Failed to save report");
-      // TODO: surface this in the UI if you want
-      return;
+      const res = await fetch("/api/reports", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id,
+          clientName: form.clientName,
+          propertyAddress: form.propertyAddress,
+          inspectionDate: form.inspectionDate,
+          inspectorName: form.inspectorName,
+          rootIntrusion: form.rootIntrusion,
+          cracks: form.cracks,
+          offsets: form.offsets,
+          sagging: form.sagging,
+          blockages: form.blockages,
+          corrosion: form.corrosion,
+          greaseDebris: form.greaseDebris,
+          notes: buildFindingsSummary(form),
+        }),
+      });
+
+      if (!res.ok) {
+        console.error("Failed to save report");
+        // TODO: surface this in the UI if you want
+        return;
+      }
+
+      router.push(`/reports/${id}`);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    router.push(`/reports/${id}`);
   }
 
   return (
@@ -174,12 +182,9 @@ export default function HomePage() {
             </div>
           </fieldset>
 
-          <button
-            type="submit"
-            className="cursor-pointer inline-flex items-center justify-center rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-800 focus:ring-offset-2"
-          >
-            Generate Report
-          </button>
+          <Button type="submit" disabled={isSubmitting} className="w-full">
+            {isSubmitting ? "Generating..." : "Generate Report"}
+          </Button>
         </form>
       </div>
     </main>
